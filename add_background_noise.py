@@ -1,11 +1,12 @@
 import os
-from pydub import AudioSegment
-import soundfile as sf
+from librosa import load, resample
 import numpy as np
+import random
+import soundfile as sf
 
 def add_background_noise(audio_path, noise_path, output_folder, snr_level=10):
     """
-    Ajoute un bruit de fond à un fichier audio et sauvegarde le nouveau fichier.
+    Ajoute un bruit de fond de cafétaria à un fichier audio et sauvegarde le nouveau fichier.
 
     :param audio_path: Chemin vers le fichier audio d'origine.
     :param noise_path: Chemin vers le fichier audio de bruit de fond.
@@ -13,33 +14,34 @@ def add_background_noise(audio_path, noise_path, output_folder, snr_level=10):
     :param snr_level: Niveau de rapport signal/bruit souhaité.
     """
     # Charger les fichiers audio
-    data, samplerate = sf.read(audio_path)
-    noise, _ = sf.read(noise_path)
+    y, sr = load(audio_path, sr=None)
+    originalNoise, srNoise = load(noise_path, sr=None)
 
-    # Assurer que le bruit peut couvrir l'audio
-    while len(noise) < len(data):
-        noise = np.concatenate([noise, noise])
+    if sr != srNoise:
+        originalNoise = resample(originalNoise, orig_sr=srNoise, target_sr=sr)
 
-    # Tronquer le bruit pour qu'il ait la même longueur que l'audio d'origine
-    noise = noise[:len(data)]
+    # Sélection puis somme de deux parties du bruit cafet de la taille du fichier audio y
+    n1 = random.randint(0, len(originalNoise) - len(y))
+    n2 = random.randint(0, len(originalNoise) - len(y))
+    noise1 = originalNoise[n1:n1+len(y)]
+    noise2 = originalNoise[n2:n2+len(y)]
+    
+    noise = noise1 + noise2
+
 
     # Calculer la puissance du signal et du bruit
-    signal_power = np.sum(data ** 2)
+    y_power = np.sum(y ** 2)
     noise_power = np.sum(noise ** 2)
 
     # Calculer le facteur de mise à l'échelle pour atteindre le niveau de SNR désiré
-    scale_factor = (signal_power / noise_power) * (10 ** (-snr_level / 10))
-    noise_scaled = noise * np.sqrt(scale_factor)
+    scale_factor = (y_power / noise_power) * (10 ** (-snr_level / 10))
 
     # Ajouter le bruit au signal d'origine
-    combined_signal = data + noise_scaled
-
-    # S'assurer que les valeurs sont dans les limites pour éviter la distorsion
-    combined_signal = np.clip(combined_signal, -1.0, 1.0)
+    combined_signal = y + noise * np.sqrt(scale_factor)
 
     # Enregistrer le nouveau fichier audio
     output_path = os.path.join(output_folder, os.path.basename(audio_path))
-    sf.write(output_path, combined_signal, samplerate)
+    sf.write(output_path, combined_signal, sr)
 
     print(f"Le fichier audio modifié a été enregistré sous : {output_path}")
 
