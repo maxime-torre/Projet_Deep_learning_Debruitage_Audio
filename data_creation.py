@@ -1,5 +1,6 @@
 import os
 import shutil
+import numpy as np
 
 # Chemin du dossier source
 source_path = r"C:\Users\torre\Documents\Sicom 3A\Projet_Parole_Audio_SICOM_3A\LibriSpeech\dev-clean"
