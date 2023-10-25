@@ -2,6 +2,8 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from pydub import AudioSegment
+from librosa import load, resample
+
 
 def calculer_snr(audio_data):
     # Calculer la puissance du signal (moyenne des valeurs au carré)
@@ -29,20 +31,19 @@ def tracer_snr_dossiers(audio_folder, max_files):
     for current_path, subfolders, files in os.walk(audio_folder):
         for file in files:
             if file.endswith('.flac') and compteur <= max_files:
-
                 try:
-                    # Charger le fichier audio
-                    audio = AudioSegment.from_file(file, format="flac")
-
-                    # Convertir les données audio en tableau numpy
-                    data = np.array(audio.get_array_of_samples())
+                    full_audio_path = os.path.join(audio_folder, file)
+                    print(f"full_audio_path : {full_audio_path}")
+                    y, sr = load(full_audio_path, sr=None)
 
                     # Calculer le SNR
-                    snr = calculer_snr(data)
+                    snr = calculer_snr(y)
 
                     # Ajouter les informations dans les listes
                     noms_fichiers.append(file)
                     valeurs_snr.append(snr)
+
+                    compteur += 1
                 except Exception as e:
                     print(f"Impossible de traiter le fichier {file}: {str(e)}")
 
@@ -60,6 +61,6 @@ def tracer_snr_dossiers(audio_folder, max_files):
         print("Aucune donnée à tracer.")
 
 # Utilisation de la fonction
-path = r"C:\Users\torre\Documents\Sicom 3A\Projet_Parole_Audio_SICOM_3A\raw_data" # spécifiez le chemin vers votre dossier contenant les fichiers audio
-max_files = 10  # spécifiez le nombre maximal de fichiers à traiter
+path = r"C:\Users\torre\Documents\Sicom 3A\Projet_Parole_Audio_SICOM_3A\noised_data" # spécifiez le chemin vers votre dossier contenant les fichiers audio
+max_files = 150  # spécifiez le nombre maximal de fichiers à traiter
 tracer_snr_dossiers(path, max_files)
