@@ -5,9 +5,6 @@ from add_background_noise import add_background_noise
 
 do_noise_data = True
 
-
-
-
 def noise_data():
     audio_folder = Path.cwd() / "data" / "raw_data" # chemin du dossier contenant les fichiers flac
     noise_file = Path.cwd() / "data" / "babble_16k.wav"  # chemin du fichier de bruit
