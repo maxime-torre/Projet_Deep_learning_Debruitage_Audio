@@ -3,6 +3,10 @@ import os
 from pathlib import Path
 from add_background_noise import add_background_noise
 
+do_noise_data = True
+
+
+
 
 def noise_data():
     audio_folder = Path.cwd() / "data" / "raw_data" # chemin du dossier contenant les fichiers flac
@@ -35,5 +39,5 @@ def noise_data():
 
 
 if __name__ == '__main__':
-    if noise_data:
+    if do_noise_data:
         noise_data()
