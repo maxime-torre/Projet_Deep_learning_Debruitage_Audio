@@ -3,6 +3,7 @@ from librosa import load, resample
 import numpy as np
 import random
 import soundfile as sf
+from modules import SNR_dB, power
 
 def add_background_noise(audio_path, noise_path, output_folder, snr_level=10):
     """
@@ -30,8 +31,8 @@ def add_background_noise(audio_path, noise_path, output_folder, snr_level=10):
 
 
     # Calculer la puissance du signal et du bruit
-    y_power = np.sum(y ** 2)
-    noise_power = np.sum(noise ** 2)
+    y_power = power(y)
+    noise_power = power(noise)
 
     # Calculer le facteur de mise à l'échelle pour atteindre le niveau de SNR désiré
     scale_factor = (y_power / noise_power) * (10 ** (-snr_level / 10))
@@ -44,6 +45,7 @@ def add_background_noise(audio_path, noise_path, output_folder, snr_level=10):
     sf.write(output_path, combined_signal, sr)
 
     print(f"Le fichier audio modifié a été enregistré sous : {output_path}")
+    print(SNR_dB(y, np.sqrt(scale_factor)*noise))
 
 
 # Spécifier les chemins des fichiers et dossiers
@@ -62,4 +64,4 @@ for file in os.listdir(audio_folder):
         full_audio_path = os.path.join(audio_folder, file)
 
         # Appeler la fonction pour ajouter un bruit de fond
-        add_background_noise(full_audio_path, noise_file, output_folder)
+        add_background_noise(full_audio_path, noise_file, output_folder, snr_level = random.randint(-10,10))

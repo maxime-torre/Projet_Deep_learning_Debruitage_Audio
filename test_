@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 from pydub import AudioSegment
 from librosa import load, resample
 
-
 def calculer_snr(audio_data):
     # Calculer la puissance du signal (moyenne des valeurs au carré)
     signal_power = np.mean(audio_data ** 2)
