@@ -29,7 +29,6 @@ def noise_data():
             full_audio_path = audio_folder / file
             full_output_folder_path = output_folder / f"{SNRvalue}"
             
-            # print(full_output_folder_path)
 
             # Appeler la fonction pour ajouter un bruit de fond
             add_background_noise(full_audio_path, noise_file, full_output_folder_path, snr_level = SNRvalue)
