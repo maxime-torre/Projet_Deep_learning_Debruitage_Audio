@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import pickle
 import numpy as np
 import librosa
+from pathlib import Path
 
 def display_spectrogram_from_pickle(pickle_file_path):
     """
@@ -18,7 +19,7 @@ def display_spectrogram_from_pickle(pickle_file_path):
     plt.show()
 
 # Exemple de chemin vers un fichier pickle de spectrogramme
-example_pickle_path = r'C:\Users\torre\Documents\Sicom 3A\Projet_Parole_Audio_SICOM_3A\data\Spectros\-2\25.pkl' # Remplacer par le chemin réel
+example_pickle_path = spectrogram_path = Path.cwd() / "data" / "Spectros" / "-2" / "25.pkl" # Remplacer par le chemin réel
 
 # Afficher le spectrogramme
 display_spectrogram_from_pickle(example_pickle_path)

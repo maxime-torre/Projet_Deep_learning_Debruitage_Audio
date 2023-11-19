@@ -9,11 +9,12 @@ import matplotlib.pyplot as plt
 from IPython.display import Audio, display
 import os
 import pickle
+from pathlib import Path
 
 # Nous allons maintenant enregistrer les données du spectrogramme dans un fichier JSON
 
-base_path = r"C:\Users\torre\Documents\Sicom 3A\Projet_Parole_Audio_SICOM_3A\data\noised_data"
-spectrogram_path = r"C:\Users\torre\Documents\Sicom 3A\Projet_Parole_Audio_SICOM_3A\data\Spectros"
+base_path = Path.cwd() / "data" / "noised_data"
+spectrogram_path = Path.cwd() / "data" / "Spectros"
 
 os.makedirs(spectrogram_path, exist_ok=True)
 
