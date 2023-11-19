@@ -13,3 +13,10 @@ def SDRout_dB(util, predicted):
 
 def gain(SNRin, SDRout):
     return SDRout - SNRin
+
+
+
+def normalizeDividingByMax(tensor):
+    normalizedTensor = tensor.copy()
+
+    return normalizedTensor / np.max(tensor)

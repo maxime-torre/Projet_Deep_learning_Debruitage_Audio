@@ -27,8 +27,8 @@ def load_spectrograms_to_tensor(spectrogram_folder):
     return tensor
 
 # Exemple d'utilisation
-spectrogram_folder = r"C:\Users\torre\Documents\Sicom 3A\Projet_Parole_Audio_SICOM_3A\data\Spectros"
-spectrogram_tensor = load_spectrograms_to_tensor(spectrogram_folder)
+# spectrogram_folder = r"C:\Users\torre\Documents\Sicom 3A\Projet_Parole_Audio_SICOM_3A\data\Spectros"
+# spectrogram_tensor = load_spectrograms_to_tensor(spectrogram_folder)
 
-print(spectrogram_tensor)
-print(len(spectrogram_tensor))
+# print(spectrogram_tensor)
+# print(len(spectrogram_tensor))
