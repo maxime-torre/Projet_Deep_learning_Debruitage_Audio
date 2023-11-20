@@ -18,15 +18,19 @@ spectrogram_path = Path.cwd() / "data" / "Spectros"
 
 os.makedirs(spectrogram_path, exist_ok=True)
 
-def save_spectrogram_to_pickle(y, sr, pickle_file_path):
+def save_amplitude_spectrogram_to_pickle(y, sr, pickle_file_path):
     """
-    Save the spectrogram data to a pickle file.
+    Save the amplitude spectrogram data to a pickle file.
     """
-    S = librosa.feature.melspectrogram(y=y, sr=sr)
-    S_dB = librosa.power_to_db(S, ref=np.max)
+    # Calcul du STFT (Short-Time Fourier Transform)
+    D = librosa.stft(y)
 
+    # Conversion en amplitude
+    S = np.abs(D)
+
+    # Sauvegarde dans un fichier pickle
     with open(pickle_file_path, 'wb') as pickle_file:
-        pickle.dump(S_dB, pickle_file)
+        pickle.dump(S, pickle_file)
 
 # Processus pour convertir les fichiers .flac en spectrogrammes et les enregistrer en format pickle
 for folder in range(-10, 11):
@@ -40,6 +44,6 @@ for folder in range(-10, 11):
             y, sr = librosa.load(file_path, sr=None)  # Charger sans changer le taux d'échantillonnage
 
             pickle_file_path = os.path.join(current_spectrogram_folder, file.replace('.flac', '.pkl'))
-            save_spectrogram_to_pickle(y, sr, pickle_file_path)
+            save_amplitude_spectrogram_to_pickle(y, sr, pickle_file_path)
 
 "Les spectrogrammes ont été générés et enregistrés sous forme de fichiers pickle dans le dossier 'spectrogrammes'."
