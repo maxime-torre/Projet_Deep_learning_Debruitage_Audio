@@ -8,7 +8,7 @@ import librosa
 # from librosa import load, resample
 from pathlib import Path
 
-def add_background_noise(audio_path, noise_path, output_folder, snr_level=10):
+def add_background_noise(audio_path, noise_path, output_folder, output_noise_folder, snr_level=10):
     """
     Ajoute un bruit de fond de cafétaria à un fichier audio et sauvegarde le nouveau fichier.
 
@@ -47,13 +47,17 @@ def add_background_noise(audio_path, noise_path, output_folder, snr_level=10):
 
     # Calculer le facteur de mise à l'échelle pour atteindre le niveau de SNR désiré
     scale_factor = (y_power / noise_power) * (10 ** (-snr_level / 10))
+    scale_noise = noise * np.sqrt(scale_factor)
 
     # Ajouter le bruit au signal d'origine
-    combined_signal = yResized + noise * np.sqrt(scale_factor)
+    combined_signal = yResized + scale_noise
 
     # Enregistrer le nouveau fichier audio
     output_path = os.path.join(output_folder, os.path.basename(audio_path))
+    output_noise_path = os.path.join(output_noise_folder, os.path.basename(audio_path))
+
     sf.write(output_path, combined_signal, sr)
+    sf.write(output_noise_path, scale_noise, sr)
 
     print(f"Le fichier audio modifié a été enregistré sous : {output_path}")
     print(SNRin_dB(yResized, np.sqrt(scale_factor)*noise))
