@@ -8,7 +8,7 @@ import librosa
 # from librosa import load, resample
 from pathlib import Path
 
-def add_background_noise(audio_path, noise_path, output_folder, output_noise_folder, snr_level=10):
+def add_background_noise(audio_path, noise_path, output_folder, output_noise_folder, audio_folder_cut, snr_level=10):
     """
     Ajoute un bruit de fond de cafétaria à un fichier audio et sauvegarde le nouveau fichier.
 
@@ -55,7 +55,9 @@ def add_background_noise(audio_path, noise_path, output_folder, output_noise_fol
     # Enregistrer le nouveau fichier audio
     output_path = os.path.join(output_folder, os.path.basename(audio_path))
     output_noise_path = os.path.join(output_noise_folder, os.path.basename(audio_path))
+    audio_folder_cut_path = os.path.join(audio_folder_cut, os.path.basename(audio_path))
 
+    sf.write(audio_folder_cut_path, yResized, sr)
     sf.write(output_path, combined_signal, sr)
     sf.write(output_noise_path, scale_noise, sr)
 
