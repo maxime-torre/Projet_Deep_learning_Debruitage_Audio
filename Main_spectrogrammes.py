@@ -13,6 +13,12 @@ from pathlib import Path
 
 # Nous allons maintenant enregistrer les données du spectrogramme dans un fichier JSON
 
+n_fft = 2048
+n_window = 600
+hop_length = 256
+window = "hann"
+
+
 base_path = Path.cwd() / "data" / "noised_data"
 spectrogram_path = Path.cwd() / "data" / "Spectros"
 
@@ -44,6 +50,18 @@ for folder in range(-10, 11):
             y, sr = librosa.load(file_path, sr=None)  # Charger sans changer le taux d'échantillonnage
 
             pickle_file_path = os.path.join(current_spectrogram_folder, file.replace('.flac', '.pkl'))
-            save_amplitude_spectrogram_to_pickle(y, sr, pickle_file_path)
+
+            stft = librosa.stft(y, n_fft=n_fft, hop_length=hop_length, win_length=n_window, window='hann')
+
+            # Conversion en amplitude
+            stft_amplitude = np.abs(stft)
+            with open(pickle_file_path, 'wb') as pickle_file:
+                pickle.dump(stft_amplitude, pickle_file)
+
+
+
+
+
+            # save_amplitude_spectrogram_to_pickle(y, sr, pickle_file_path)
 
 "Les spectrogrammes ont été générés et enregistrés sous forme de fichiers pickle dans le dossier 'spectrogrammes'."

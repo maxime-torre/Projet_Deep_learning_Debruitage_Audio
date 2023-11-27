@@ -2,8 +2,10 @@ import numpy as np
 from pathlib import Path
 import pickle
 import librosa 
+import cmath
 
-def calculate_amplitude_spectrogram(audio_path, N, H):
+
+def calculate_amplitude_spectrogram(audio_path, N, N_window, H):
     """
     Calculer le spectrogramme d'amplitude pour un fichier audio donné.
 
@@ -15,14 +17,14 @@ def calculate_amplitude_spectrogram(audio_path, N, H):
     print(len(y))
 
     # Calculer le STFT
-    D = librosa.stft(y, n_fft=N, hop_length=H, win_length=N, window='hann')
+    D = librosa.stft(y, n_fft=N, hop_length=H, win_length=N_window, window='hann')
 
     # Convertir en amplitudes
     S = np.abs(D)
 
     return S
 
-def mask_binary(raw_data_audio, noise_audio_path, N, H, mask_type='soft'):
+def mask_binary(raw_data_audio, noise_audio_path, N, N_window, H, mask_type='soft'):
     """
     Appliquer un masque binaire ou souple sur un spectrogramme bruité.
 
@@ -32,8 +34,8 @@ def mask_binary(raw_data_audio, noise_audio_path, N, H, mask_type='soft'):
     :return: Spectrogramme avec masque appliqué.
     """
     # Charger le fichier audio de bruit et calculer son spectrogramme
-    audio_spectrogram = calculate_amplitude_spectrogram(raw_data_audio, N, H)
-    noise_spectrogram = calculate_amplitude_spectrogram(noise_audio_path, N, H)
+    audio_spectrogram = calculate_amplitude_spectrogram(raw_data_audio, N, N_window, H)
+    noise_spectrogram = calculate_amplitude_spectrogram(noise_audio_path, N, N_window, H)
 
     if mask_type == 'binary':
         # Estimation du masque binaire
@@ -46,11 +48,20 @@ def mask_binary(raw_data_audio, noise_audio_path, N, H, mask_type='soft'):
         return soft_mask 
     else:
         raise ValueError("Invalid mask type. Choose 'soft' or 'binary'.")
-    
-#test
-N = 2048
-H = 1024
-noise_audio_path =  Path.cwd() / "data" / "only_noise" / "20.flac"# Remplacer par le chemin réel
-audio_raw_data_path = Path.cwd() / "data" / "raw_data_cut" / "20.flac"
-soft_mask = mask_binary(audio_raw_data_path, noise_audio_path, N, H)
-signal_and_noise = Path.cwd() / "data" / "noised_data" / "10" / "20.flac"
+
+def create_mask(raw, noise, signal, n_fft, n_window, hop_length, window):
+    stft_raw = librosa.stft(raw, n_fft=n_fft, hop_length=hop_length, win_length=n_window, window=window)
+    stft_noise = librosa.stft(noise, n_fft=n_fft, hop_length=hop_length, win_length=n_window, window=window)
+    stft_signal = librosa.stft(signal, n_fft=n_fft, hop_length=hop_length, win_length=n_window, window='hann')
+
+    mod_raw = np.abs(stft_raw)
+    mod_noise = np.abs(stft_noise)
+
+    phase = np.zeros_like(stft_signal)
+    for i in range(stft_signal.shape[0]):
+        for j in range(stft_signal.shape[1]):
+            phase[i, j] = cmath.phase(stft_signal[i, j])
+
+    mask = mod_raw > mod_noise
+
+    return mask * phase
