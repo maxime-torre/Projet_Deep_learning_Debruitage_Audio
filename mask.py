@@ -19,17 +19,12 @@ def compute_binary_mask(raw, noise, signal, param_stft):
     stft_noise = librosa.stft(noise, n_fft=param_stft.n_fft, hop_length=param_stft.hop_length, win_length=param_stft.n_window, window=param_stft.window)
     stft_signal = librosa.stft(signal, n_fft=param_stft.n_fft, hop_length=param_stft.hop_length, win_length=param_stft.n_window, window=param_stft.window)
 
-    mod_raw = np.abs(stft_raw)
-    mod_noise = np.abs(stft_noise)
-
-    phase = np.zeros_like(stft_signal)
-    for i in range(stft_signal.shape[0]):
-        for j in range(stft_signal.shape[1]):
-            phase[i, j] = cmath.phase(stft_signal[i, j])
+    mod_raw = np.abs(stft_raw)**2
+    mod_noise = np.abs(stft_noise)**2
 
     mask = mod_raw > mod_noise
 
-    return mask * phase
+    return mask
 
 
 def compute_soft_mask(raw, noise, signal, param_stft):
@@ -47,20 +42,15 @@ def compute_soft_mask(raw, noise, signal, param_stft):
     stft_noise = librosa.stft(noise, n_fft=param_stft.n_fft, hop_length=param_stft.hop_length, win_length=param_stft.n_window, window=param_stft.window)
     stft_signal = librosa.stft(signal, n_fft=param_stft.n_fft, hop_length=param_stft.hop_length, win_length=param_stft.n_window, window=param_stft.window)
 
-    mod_raw = np.abs(stft_raw)
-    mod_noise = np.abs(stft_noise)
-
-    phase = np.zeros_like(stft_signal)
-    for i in range(stft_signal.shape[0]):
-        for j in range(stft_signal.shape[1]):
-            phase[i, j] = cmath.phase(stft_signal[i, j])
+    mod_raw = np.abs(stft_raw)**2
+    mod_noise = np.abs(stft_noise)**2
 
     mask = mod_raw / (mod_raw + mod_noise)
 
     # TODO Est-ce vraiment utile, on devrait pas garder pour des questions de normes ?
     mask = np.clip(mask, 0, 1)
 
-    return mask * phase
+    return mask
 
 
 def compute_masks_into_tensor(wanted_snr, paths, compute_mask, param_stft):
