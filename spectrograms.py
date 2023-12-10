@@ -26,12 +26,11 @@ def compute_spectrograms(paths, param_stft):
                 file_path = os.path.join(current_folder_path, file)
                 y, sr = librosa.load(file_path, sr=None)  # Charger sans changer le taux d'échantillonnage
 
-                pickle_file_path = os.path.join(current_spectrogram_folder, file.replace('.flac', '.pkl'))
-
                 stft = librosa.stft(y, n_fft=param_stft.n_fft, hop_length=param_stft.hop_length, win_length=param_stft.n_window, window=param_stft.window)
 
+                pickle_file_path = os.path.join(current_spectrogram_folder, file.replace('.flac', '.pkl'))
                 # Conversion en amplitude
-                stft_amplitude = np.abs(stft)
+                stft_amplitude = np.abs(stft)**2
                 with open(pickle_file_path, 'wb') as pickle_file:
                     pickle.dump(stft_amplitude, pickle_file)
 

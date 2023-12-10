@@ -4,7 +4,7 @@ import cmath
 import os
 
 
-def compute_binary_mask(raw, noise, signal, param_stft):
+def compute_binary_mask(raw, noise, param_stft):
     """
     Calcul le mask binaire pour un signal donnée, ainsi que sa version bruité et le
     bruit lui même (tout au format temporelle)
@@ -17,7 +17,6 @@ def compute_binary_mask(raw, noise, signal, param_stft):
     
     stft_raw = librosa.stft(raw, n_fft=param_stft.n_fft, hop_length=param_stft.hop_length, win_length=param_stft.n_window, window=param_stft.window)
     stft_noise = librosa.stft(noise, n_fft=param_stft.n_fft, hop_length=param_stft.hop_length, win_length=param_stft.n_window, window=param_stft.window)
-    stft_signal = librosa.stft(signal, n_fft=param_stft.n_fft, hop_length=param_stft.hop_length, win_length=param_stft.n_window, window=param_stft.window)
 
     mod_raw = np.abs(stft_raw)**2
     mod_noise = np.abs(stft_noise)**2
@@ -27,7 +26,7 @@ def compute_binary_mask(raw, noise, signal, param_stft):
     return mask
 
 
-def compute_soft_mask(raw, noise, signal, param_stft):
+def compute_soft_mask(raw, noise, param_stft):
     """
     Calcul le soft mask pour un signal donnée, ainsi que sa version bruité et le
     bruit lui même (tout au format temporelle)
@@ -40,7 +39,6 @@ def compute_soft_mask(raw, noise, signal, param_stft):
     
     stft_raw = librosa.stft(raw, n_fft=param_stft.n_fft, hop_length=param_stft.hop_length, win_length=param_stft.n_window, window=param_stft.window)
     stft_noise = librosa.stft(noise, n_fft=param_stft.n_fft, hop_length=param_stft.hop_length, win_length=param_stft.n_window, window=param_stft.window)
-    stft_signal = librosa.stft(signal, n_fft=param_stft.n_fft, hop_length=param_stft.hop_length, win_length=param_stft.n_window, window=param_stft.window)
 
     mod_raw = np.abs(stft_raw)**2
     mod_noise = np.abs(stft_noise)**2
