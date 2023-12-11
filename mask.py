@@ -72,14 +72,12 @@ def compute_masks_into_tensor(wanted_snr, paths, compute_mask, param_stft):
 
             for noised_audio_file in noised_audio_files:
                 raw_path = os.path.join(paths.raw_cut_folder, noised_audio_file)
-                noised_audio_path = os.path.join(noised_data_path, noised_audio_file)
                 noise_path = os.path.join(paths.only_noise_folder, noised_audio_file)
                 
                 y_raw, sr= librosa.load(raw_path, sr=None)
-                y_signal, sr = librosa.load(noised_audio_path, sr=None)
                 y_noise, sr = librosa.load(noise_path, sr=None)
 
-                masks.append(compute_mask(y_raw, y_noise, y_signal, param_stft))
+                masks.append(compute_mask(y_raw, y_noise, param_stft))
 
     tensor = np.stack(masks)
     return tensor
