@@ -80,4 +80,4 @@ def compute_masks_into_tensor(wanted_snr, paths, compute_mask, param_stft):
                 masks.append(compute_mask(y_raw, y_noise, param_stft))
 
     tensor = np.stack(masks)
-    return tensor
+    return tensor.astype(np.float32)
