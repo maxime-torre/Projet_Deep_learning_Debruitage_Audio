@@ -56,6 +56,7 @@ class UNet(nn.Module):
     def __init__(self):
         super().__init__()
         self.relu = nn.ReLU()
+        self.sigmo = nn.Sigmoid()
         self.e11 = nn.Conv2d(1, 64, kernel_size=3, padding=1) # output: 570x570x64
         self.e12 = nn.Conv2d(64, 64, kernel_size=3, padding=1) # output: 568x568x64
         self.pool1 = nn.MaxPool2d(kernel_size=2, stride=2) # output: 284x284x64
@@ -157,7 +158,7 @@ class UNet(nn.Module):
         print(out.shape)
         print()
 
-        return out
+        return self.sigmo(out)
     
     def load_model(self, model_path, device):
         model = UNet().to(device)
@@ -184,7 +185,7 @@ paths = Paths()
 wanted_snr = [10]
 
 process_data = False
-train = False
+train = True
 test = True
 
 
@@ -245,13 +246,13 @@ if __name__ == '__main__':
 
         if train:
             print("Loading spectrograms into a tensor - ", end="")
-            
+            epoch_loss = []
             # print(net)
 
                 # Initialisation
             # set the device we will be using to train the model
-            # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-            device = torch.device("cpu")
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            # device = torch.device("cpu")
 
             # print("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -302,6 +303,7 @@ if __name__ == '__main__':
             for epoch in range(EPOCHS):
                 print(f"epoch : {epoch}")
                 model.train()
+                total_loss = 0
                 for data, target in trainDataLoader:  # Supposons que train_loader est votre DataLoader
                     data, target = data.to(device), target.to(device)
                     
@@ -311,18 +313,29 @@ if __name__ == '__main__':
                     loss.backward()
                     optimizer.step()
 
+                    total_loss += loss.item()
+            
+                average_loss = total_loss / len(trainDataLoader)
+                epoch_loss.append(average_loss)
+                print(f"Loss : {epoch + 1} = {average_loss}")
             # Sauvegarde du modèle
-            torch.save(model.state_dict(), 'model_path.pth')
+            torch.save(model.state_dict(), 'model_1.pth')
+
+            plt.figure()
+            plt.plot(epoch_loss)
+            plt.grid(True)
+            plt.title("Loss en fonction des epochs")
+            plt.show()
 
         if test:
             print("test")
 
             # Chemin vers le fichier de modèle
-            model_path = Path.cwd() / 'model_path.pth'
+            model_path = Path.cwd() / 'model_1.pth'
 
             # Définir le périphérique
-            # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-            device = torch.device("cpu")
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            # device = torch.device("cpu")
             test_dataset = CustomDataset(Xtest, Ytest)
             # Charger le modèle
             model = net.load_model(model_path, device)
@@ -333,17 +346,29 @@ if __name__ == '__main__':
             # Testez le modèle
             outputs, targets = net.test_model(model, testDataLoader, device)
 
-            first_output = outputs[0][0][0]
-            first_target = targets[0][0][0]
+            first_output = outputs[0][0][0].cpu()
+            first_target = targets[0][0][0].cpu()
 
             print(f"first_output.shape : {first_output.shape}")
             print(f"first_target.shape : {first_target.shape}")
 
             first_output_array = first_output.numpy()
+            middle = 0.5
+
+            for i in range(first_output_array.shape[0]):
+                for j in range(first_output_array.shape[1]):
+                    if (first_output_array[i, j] > middle):
+                        first_output_array[i, j] = 1
+                    else:
+                        first_output_array[i, j] = 0
+
+            print("max : ", first_output_array.max())
+            print("min : ", first_output_array.min())
 
             
 
             first_target_array = first_target.numpy()
+
 
             N = 2048
             H = 1024
@@ -351,12 +376,12 @@ if __name__ == '__main__':
 
             plt.figure(figsize=(10, 4))
 
-            librosa.display.specshow(librosa.amplitude_to_db(first_output_array, ref=np.max), sr=sr, hop_length=H, x_axis='time', y_axis='log')
+            librosa.display.specshow(librosa.amplitude_to_db(first_output_array, ref=np.max), sr=sr, hop_length=param_stft.hop_length, x_axis='time', y_axis='log')
             plt.colorbar(format='%+2.0f dB')
             plt.title('Spectrogramme de puissance')
             plt.tight_layout()
             plt.figure(figsize=(10, 4))
-            librosa.display.specshow(librosa.amplitude_to_db(first_target_array, ref=np.max), sr=sr, hop_length=H, x_axis='time', y_axis='log')
+            librosa.display.specshow(librosa.amplitude_to_db(first_target_array, ref=np.max), sr=sr, hop_length=param_stft.hop_length, x_axis='time', y_axis='log')
             plt.colorbar(format='%+2.0f dB')
             plt.title('Spectrogramme de puissance')
             plt.tight_layout()
