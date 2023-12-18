@@ -15,7 +15,7 @@ import torch.nn.functional as F
 from torch.nn import MaxPool2d, MaxUnpool2d
 from torch.utils.data import DataLoader, TensorDataset
 import glob
-import cv2
+# import cv2
 import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader
@@ -162,7 +162,8 @@ paths = Paths()
 wanted_snr = [10]
 
 process_data = False
-create_tensors = True
+train = False
+test = True
 
 
 normalizer = normalizeDividingByMax
@@ -199,7 +200,7 @@ if __name__ == '__main__':
         compute_spectrograms(paths, param_stft)
         print("OK")
 
-    if create_tensors:
+    if train:
         print("Loading spectrograms into a tensor - ", end="")
         X = load_spectrograms_to_tensor(wanted_snr, paths)
         X = X.astype(np.float32)
@@ -215,71 +216,76 @@ if __name__ == '__main__':
 
         Xtrain, Xtest, Ytrain, Ytest = train_test_split(X, Y, test_size=0.2)
 
-    net = UNet()
-    print(net)
+        net = UNet()
+        # print(net)
 
-        # Initialisation
-    # set the device we will be using to train the model
-    device = torch.device("cpu")    
-    model = UNet().to(device)
-    criterion = nn.MSELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-    # define training hyperparameters
-    INIT_LR = 1e-3
-    BATCH_SIZE = 5
-    EPOCHS = 10
+            # Initialisation
+        # set the device we will be using to train the model
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    Ytrain = torch.from_numpy(Ytrain)
-    Ytest = torch.from_numpy(Ytest)
-    # Ensure X and Y tensors are of the same type
-    Xtrain = torch.from_numpy(Xtrain)
-    Xtest = torch.from_numpy(Xtest)
+        print("cuda" if torch.cuda.is_available() else "cpu")
 
-    # Création des datasets
-    print("---------------------Xtrain----------------------")
-    print(Xtrain)
-    print(Xtrain.shape)
-    print("---------------------Ytrain----------------------")
-    print(Ytrain)
-    print(Ytrain.shape)
-    print("---------------------Xtest----------------------")
-    print(Xtest)
-    print(Xtest.shape)
-    print("---------------------Ytest----------------------")
-    print(Ytest)
-    print(Ytest.shape)
+        model = UNet().to(device)
+        criterion = nn.MSELoss()
+        optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+        # define training hyperparameters
+        INIT_LR = 1e-3
+        BATCH_SIZE = 5
+        EPOCHS = 10
 
+        Ytrain = torch.from_numpy(Ytrain)
+        Ytest = torch.from_numpy(Ytest)
+        # Ensure X and Y tensors are of the same type
+        Xtrain = torch.from_numpy(Xtrain)
+        Xtest = torch.from_numpy(Xtest)
 
-    train = CustomDataset(Xtrain, Ytrain)
-    test = CustomDataset(Xtest, Ytest)
-
-    print("uuuuuuuuuuuuuuuuuuuuuuuuuuu",train[1][0].shape)
-    print(f"train len : {train.__len__()}")
-    print(f"test len : {test.__len__()}")
-    # Now create your datasets
-    # train_dataset = TensorDataset(Xtrain, Ytrain)
-    # val_dataset = TensorDataset(Xtest, Ytest)
-    
-    # train_dataset = TensorDataset(Xtrain, Ytrain)
-    # val_dataset = TensorDataset(Xtest, Ytest)
-
-    trainDataLoader = DataLoader(train, shuffle=True, batch_size=BATCH_SIZE)
-    
-    # testDataLoader = DataLoader(test, batch_size=BATCH_SIZE)
-
-    # Entraînement
-    for epoch in range(EPOCHS):
-        model.train()
-        for data, target in trainDataLoader:  # Supposons que train_loader est votre DataLoader
-            data, target = data.to(device), target.to(device)
-            
-            optimizer.zero_grad()
-            output = model(data)
-            loss = criterion(output, target)
-            loss.backward()
-            optimizer.step()
-
-    # Sauvegarde du modèle
-    torch.save(model.state_dict(), 'model_path.pth')
+        # Création des datasets
+        # print("---------------------Xtrain----------------------")
+        # print(Xtrain)
+        # print(Xtrain.shape)
+        # print("---------------------Ytrain----------------------")
+        # print(Ytrain)
+        # print(Ytrain.shape)
+        # print("---------------------Xtest----------------------")
+        # print(Xtest)
+        # print(Xtest.shape)
+        # print("---------------------Ytest----------------------")
+        # print(Ytest)
+        # print(Ytest.shape)
 
 
+        train = CustomDataset(Xtrain, Ytrain)
+        test = CustomDataset(Xtest, Ytest)
+
+        # print("uuuuuuuuuuuuuuuuuuuuuuuuuuu",train[1][0].shape)
+        # print(f"train len : {train.__len__()}")
+        # print(f"test len : {test.__len__()}")
+        # Now create your datasets
+        # train_dataset = TensorDataset(Xtrain, Ytrain)
+        # val_dataset = TensorDataset(Xtest, Ytest)
+        
+        # train_dataset = TensorDataset(Xtrain, Ytrain)
+        # val_dataset = TensorDataset(Xtest, Ytest)
+
+        trainDataLoader = DataLoader(train, shuffle=True, batch_size=BATCH_SIZE)
+        
+        # testDataLoader = DataLoader(test, batch_size=BATCH_SIZE)
+
+        # Entraînement
+        for epoch in range(EPOCHS):
+            print(f"epoch : {epoch}")
+            model.train()
+            for data, target in trainDataLoader:  # Supposons que train_loader est votre DataLoader
+                data, target = data.to(device), target.to(device)
+                
+                optimizer.zero_grad()
+                output = model(data)
+                loss = criterion(output, target)
+                loss.backward()
+                optimizer.step()
+
+        # Sauvegarde du modèle
+        torch.save(model.state_dict(), 'model_path.pth')
+
+    if test:
+        print("test")
