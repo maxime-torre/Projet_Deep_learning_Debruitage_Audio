@@ -8,7 +8,8 @@ from modules import normalizeDividingByMax
 from noise import noise_data
 from spectrograms import compute_spectrograms, load_spectrograms_to_tensor
 from mask import compute_masks_into_tensor, compute_binary_mask, compute_soft_mask
-
+from sklearn.metrics import accuracy_score, confusion_matrix
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -19,6 +20,8 @@ import glob
 import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader
+
+import librosa
 
 
 class Param_stft():
@@ -156,6 +159,25 @@ class UNet(nn.Module):
 
         return out
     
+    def load_model(self, model_path, device):
+        model = UNet().to(device)
+        # Ajouter map_location pour charger le modèle sur le CPU
+        model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
+        return model
+
+
+    def test_model(self, model, test_loader, device):
+        model.eval()
+        all_output = []
+        all_target = []
+        with torch.no_grad():
+            for data, target in test_loader:
+                data, target = data.to(device), target.to(device)
+                output = model(data)
+                all_output.append(output)
+                all_target.append(target)
+        return all_output, all_target
+    
 param_stft = Param_stft()
 paths = Paths()
 
@@ -200,8 +222,7 @@ if __name__ == '__main__':
         compute_spectrograms(paths, param_stft)
         print("OK")
 
-    if train:
-        print("Loading spectrograms into a tensor - ", end="")
+    if train or test:
         X = load_spectrograms_to_tensor(wanted_snr, paths)
         X = X.astype(np.float32)
         # X_normalized = normalizer(X)
@@ -217,75 +238,128 @@ if __name__ == '__main__':
         Xtrain, Xtest, Ytrain, Ytest = train_test_split(X, Y, test_size=0.2)
 
         net = UNet()
-        # print(net)
 
-            # Initialisation
-        # set the device we will be using to train the model
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-        print("cuda" if torch.cuda.is_available() else "cpu")
-
-        model = UNet().to(device)
-        criterion = nn.MSELoss()
-        optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-        # define training hyperparameters
         INIT_LR = 1e-3
         BATCH_SIZE = 5
         EPOCHS = 10
 
-        Ytrain = torch.from_numpy(Ytrain)
-        Ytest = torch.from_numpy(Ytest)
-        # Ensure X and Y tensors are of the same type
-        Xtrain = torch.from_numpy(Xtrain)
-        Xtest = torch.from_numpy(Xtest)
+        if train:
+            print("Loading spectrograms into a tensor - ", end="")
+            
+            # print(net)
 
-        # Création des datasets
-        # print("---------------------Xtrain----------------------")
-        # print(Xtrain)
-        # print(Xtrain.shape)
-        # print("---------------------Ytrain----------------------")
-        # print(Ytrain)
-        # print(Ytrain.shape)
-        # print("---------------------Xtest----------------------")
-        # print(Xtest)
-        # print(Xtest.shape)
-        # print("---------------------Ytest----------------------")
-        # print(Ytest)
-        # print(Ytest.shape)
+                # Initialisation
+            # set the device we will be using to train the model
+            # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            device = torch.device("cpu")
+
+            # print("cuda" if torch.cuda.is_available() else "cpu")
+
+            model = UNet().to(device)
+            criterion = nn.MSELoss()
+            optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+            # define training hyperparameters
+
+            Ytrain = torch.from_numpy(Ytrain)
+            Ytest = torch.from_numpy(Ytest)
+            # Ensure X and Y tensors are of the same type
+            Xtrain = torch.from_numpy(Xtrain)
+            Xtest = torch.from_numpy(Xtest)
+
+            # Création des datasets
+            # print("---------------------Xtrain----------------------")
+            # print(Xtrain)
+            # print(Xtrain.shape)
+            # print("---------------------Ytrain----------------------")
+            # print(Ytrain)
+            # print(Ytrain.shape)
+            # print("---------------------Xtest----------------------")
+            # print(Xtest)
+            # print(Xtest.shape)
+            # print("---------------------Ytest----------------------")
+            # print(Ytest)
+            # print(Ytest.shape)
 
 
-        train = CustomDataset(Xtrain, Ytrain)
-        test = CustomDataset(Xtest, Ytest)
+            train = CustomDataset(Xtrain, Ytrain)
+            
 
-        # print("uuuuuuuuuuuuuuuuuuuuuuuuuuu",train[1][0].shape)
-        # print(f"train len : {train.__len__()}")
-        # print(f"test len : {test.__len__()}")
-        # Now create your datasets
-        # train_dataset = TensorDataset(Xtrain, Ytrain)
-        # val_dataset = TensorDataset(Xtest, Ytest)
-        
-        # train_dataset = TensorDataset(Xtrain, Ytrain)
-        # val_dataset = TensorDataset(Xtest, Ytest)
+            # print("uuuuuuuuuuuuuuuuuuuuuuuuuuu",train[1][0].shape)
+            # print(f"train len : {train.__len__()}")
+            # print(f"test len : {test.__len__()}")
+            # Now create your datasets
+            # train_dataset = TensorDataset(Xtrain, Ytrain)
+            # val_dataset = TensorDataset(Xtest, Ytest)
+            
+            # train_dataset = TensorDataset(Xtrain, Ytrain)
+            # val_dataset = TensorDataset(Xtest, Ytest)
 
-        trainDataLoader = DataLoader(train, shuffle=True, batch_size=BATCH_SIZE)
-        
-        # testDataLoader = DataLoader(test, batch_size=BATCH_SIZE)
+            trainDataLoader = DataLoader(train, shuffle=True, batch_size=BATCH_SIZE)
+            
+            # testDataLoader = DataLoader(test, batch_size=BATCH_SIZE)
 
-        # Entraînement
-        for epoch in range(EPOCHS):
-            print(f"epoch : {epoch}")
-            model.train()
-            for data, target in trainDataLoader:  # Supposons que train_loader est votre DataLoader
-                data, target = data.to(device), target.to(device)
-                
-                optimizer.zero_grad()
-                output = model(data)
-                loss = criterion(output, target)
-                loss.backward()
-                optimizer.step()
+            # Entraînement
+            for epoch in range(EPOCHS):
+                print(f"epoch : {epoch}")
+                model.train()
+                for data, target in trainDataLoader:  # Supposons que train_loader est votre DataLoader
+                    data, target = data.to(device), target.to(device)
+                    
+                    optimizer.zero_grad()
+                    output = model(data)
+                    loss = criterion(output, target)
+                    loss.backward()
+                    optimizer.step()
 
-        # Sauvegarde du modèle
-        torch.save(model.state_dict(), 'model_path.pth')
+            # Sauvegarde du modèle
+            torch.save(model.state_dict(), 'model_path.pth')
 
-    if test:
-        print("test")
+        if test:
+            print("test")
+
+            # Chemin vers le fichier de modèle
+            model_path = Path.cwd() / 'model_path.pth'
+
+            # Définir le périphérique
+            # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            device = torch.device("cpu")
+            test_dataset = CustomDataset(Xtest, Ytest)
+            # Charger le modèle
+            model = net.load_model(model_path, device)
+
+            # Préparer les données de test (à remplir avec vos données)
+            testDataLoader = DataLoader(test_dataset, batch_size=BATCH_SIZE)
+
+            # Testez le modèle
+            outputs, targets = net.test_model(model, testDataLoader, device)
+
+            first_output = outputs[0][0][0]
+            first_target = targets[0][0][0]
+
+            print(f"first_output.shape : {first_output.shape}")
+            print(f"first_target.shape : {first_target.shape}")
+
+            first_output_array = first_output.numpy()
+
+            
+
+            first_target_array = first_target.numpy()
+
+            N = 2048
+            H = 1024
+            sr = 16000
+
+            plt.figure(figsize=(10, 4))
+
+            librosa.display.specshow(librosa.amplitude_to_db(first_output_array, ref=np.max), sr=sr, hop_length=H, x_axis='time', y_axis='log')
+            plt.colorbar(format='%+2.0f dB')
+            plt.title('Spectrogramme de puissance')
+            plt.tight_layout()
+            plt.figure(figsize=(10, 4))
+            librosa.display.specshow(librosa.amplitude_to_db(first_target_array, ref=np.max), sr=sr, hop_length=H, x_axis='time', y_axis='log')
+            plt.colorbar(format='%+2.0f dB')
+            plt.title('Spectrogramme de puissance')
+            plt.tight_layout()
+            plt.show()
+
+
