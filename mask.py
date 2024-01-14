@@ -3,6 +3,7 @@ import librosa
 import cmath
 import os
 
+import pickle
 
 def compute_binary_mask(raw, noise, param_stft):
     """
@@ -81,3 +82,14 @@ def compute_masks_into_tensor(wanted_snr, paths, compute_mask, param_stft):
 
     tensor = np.stack(masks)
     return tensor.astype(np.float32)
+
+
+def save_mask(masks, path, names):
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    for i in range (len(masks)):
+        pickle_file_path = os.path.join(path, names[i])
+
+        with open(pickle_file_path, 'wb') as pickle_file:
+            pickle.dump(masks[i], pickle_file)

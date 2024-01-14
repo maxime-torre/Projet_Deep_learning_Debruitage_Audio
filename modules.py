@@ -20,3 +20,10 @@ def normalizeDividingByMax(tensor):
     normalizedTensor = tensor.copy()
 
     return normalizedTensor / np.max(tensor)
+
+def normalizeDividingByMaxForEach(tensor):
+    normalizedTensor = tensor.copy()
+
+    for i in range(len(tensor)):
+        normalizedTensor[i] = tensor[i] / np.max(tensor[i])
+    return normalizedTensor / np.max(tensor)
