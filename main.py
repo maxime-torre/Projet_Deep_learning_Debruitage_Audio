@@ -142,7 +142,6 @@ if __name__ == '__main__':
             model = model_we_are_using.to(device)
             criterion = nn.MSELoss()
             optimizer = torch.optim.Adam(model.parameters(), lr = INIT_LR)
-            # define training hyperparameters
 
             # Transforme X et Y en objet Torch
             Xtrain = torch.from_numpy(Xtrain)
@@ -152,26 +151,6 @@ if __name__ == '__main__':
             Ytrain = torch.from_numpy(Ytrain)
             Yval = torch.from_numpy(Yval)
             Ytest = torch.from_numpy(Ytest)
-
-            # # Création des datasets
-            # print("---------------------Xtrain----------------------")
-            # # print(Xtrain)
-            # print(Xtrain.shape)
-            # print("---------------------Ytrain----------------------")
-            # # print(Ytrain)
-            # print(Ytrain.shape)
-            # print("---------------------Xval----------------------")
-            # # print(Xval)
-            # print(Xval.shape)
-            # print("---------------------Yval----------------------")
-            # # print(Yval)
-            # print(Yval.shape)
-            # print("---------------------Xtest----------------------")
-            # # print(Xtest)
-            # print(Xtest.shape)
-            # print("---------------------Ytest----------------------")
-            # # print(Ytest)
-            # print(Ytest.shape)
 
 
             train = CustomDataset(Xtrain, Ytrain)
