@@ -5,17 +5,20 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from sklearn.model_selection import train_test_split
 
-
-from modules import normalizeDividingByMax
-
-from noise import noise_data
-from spectrograms import compute_spectrograms, load_spectrograms_to_tensor
-from mask import compute_masks_into_tensor, compute_binary_mask, compute_soft_mask, save_mask
-from models.unet import UNet
-
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
+
+
+from modules import normalizeDividingByMax, normalizeDividingByMaxForEach
+
+from noise import noise_data
+from spectrograms import compute_spectrograms, load_spectrograms_to_tensor
+from mask import compute_masks_into_tensor, compute_binary_mask, save_mask
+
+from models.unet import UNet
+from models.simpleUnet import SimpleUnet
+from models.internetUnet import InternetUnet
 
 
 
@@ -57,21 +60,21 @@ paths = Paths()
 
 process_data = False
 train = True
-test = False
+test = True
 
 
-normalizer = normalizeDividingByMax
+normalizer = normalizeDividingByMaxForEach
 compute_mask = compute_binary_mask
-model_we_are_using = UNet()
+model_we_are_using = SimpleUnet()
 
 wanted_snr = [10]
 TEST_SIZE = 0.2
-INIT_LR = 5e-3
-BATCH_SIZE = 5
-EPOCHS = 10
+INIT_LR = 1e-2
+BATCH_SIZE = 7
+EPOCHS = 50
 
 # Chemin vers le fichier de modèle
-model_name = 'model'
+model_name = 'model_6'
 model_path = Path.cwd() / f'{model_name}.pth'
 
 
@@ -120,13 +123,12 @@ if __name__ == '__main__':
         print(X.shape)
         print(Y.shape)
 
-        Xtrain, Xtest, Ytrain, Ytest = train_test_split(X, Y, test_size=TEST_SIZE, shuffle=False)
+        Xtrain, Xtest, Ytrain, Ytest = train_test_split(X_normalized, Y, test_size=TEST_SIZE, shuffle=False)
         # Xval, Xtest, Yval, Ytest = train_test_split(Xtest, Ytest, test_size=0.5)
 
-        # TODO A dégager après la ligne du dessus décommenter
         Xval, Yval = Xtest, Ytest
 
-        net = UNet()
+        net = model_we_are_using
 
         if train:
             epoch_loss = []
@@ -137,9 +139,9 @@ if __name__ == '__main__':
             # device = torch.device("cpu")
 
 
-            model = UNet().to(device)
+            model = model_we_are_using.to(device)
             criterion = nn.MSELoss()
-            optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+            optimizer = torch.optim.Adam(model.parameters(), lr = INIT_LR)
             # define training hyperparameters
 
             # Transforme X et Y en objet Torch
@@ -180,7 +182,7 @@ if __name__ == '__main__':
 
             # Entraînement
             for epoch in range(EPOCHS):
-                print(f"epoch : {epoch}")
+                print(f"epoch : {epoch + 1}")
                 model.train()
                 total_loss = 0
                 for data, target in trainDataLoader:
@@ -232,7 +234,7 @@ if __name__ == '__main__':
             model = net.load_model(model_path, device)
 
             # Préparer les données de test (à remplir avec vos données)
-            testDataLoader = DataLoader(test_dataset, batch_size=BATCH_SIZE)
+            testDataLoader = DataLoader(test_dataset, batch_size=1)
 
             # Testez le modèle
             outputs = net.test_model(model, testDataLoader, device)

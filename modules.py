@@ -26,4 +26,4 @@ def normalizeDividingByMaxForEach(tensor):
 
     for i in range(len(tensor)):
         normalizedTensor[i] = tensor[i] / np.max(tensor[i])
-    return normalizedTensor / np.max(tensor)
+    return normalizedTensor
